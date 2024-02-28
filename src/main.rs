@@ -1,30 +1,4 @@
-/* 
-
-view는 언제 업데이트가 되는가?
-    주기적으로?
-    값이 변했을 때?
-    
-
-
-예제 파일 에디터에는 update 시 처리해야될 것?이 비동기로 되있다. 비동기 처리를 해야하는가?
-    Command::perform(load_file(default_file()), Message::FileOpened),
-    비동기 처리를 위해서는 Command::perform를 붙혀야 하는듯 하다.
-
-
-
-2048 내부 로직
-    숫자를 옮긴다. + 합친다.
-    랜덤한 숫자(2,4,8)를 랜덤한 자리에 넣는다.
-    넣을 자리가 없다면 종료 - > GameOver 메시지
-
-
-GameOver 메시지를 받았으면 기존 화면 위에 띄워야하는데 가능한가?
-
-*/
-
-
 use iced::alignment::Horizontal;
-// use iced::widget::pane_grid::TitleBar;
 use iced::executor;
 use iced::keyboard;
 use iced::theme::Theme;
@@ -54,7 +28,6 @@ enum TileState {
     Value(u32),
 }
 
-// #[derive(Copy)]
 struct Game2048 {
     board: Vec<Vec<TileState>>,
     score: u32,
@@ -75,14 +48,11 @@ fn view_tile(tile: &TileState) -> Element<Message>  {
         TileState::Empty => {
             text(" ")
                 .size(40)
-                // .style(Color::from([0.6, 0.6, 0.6]))
                 .horizontal_alignment(Horizontal::Center)
-                // .into()
         },
         TileState::Value(x) => {
              text(format!("{}", x))
                 .size(40)
-                // .style(Color::from([0.5, 0.5, 0.5]))
                 .horizontal_alignment(Horizontal::Center)
             
         }
