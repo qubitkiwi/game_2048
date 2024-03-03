@@ -2,7 +2,7 @@ use iced::alignment::Horizontal;
 use iced::theme::{self, Theme};
 use iced::{color, Background, Border, Shadow};
 use iced::widget::{
-    column, row, container, text,
+    column, container, row, text, Column, Row
 };
 use iced::{
     Alignment, Application, Command, Element, Length, Settings, 
@@ -504,91 +504,31 @@ impl Application for Game2048 {
     }
 
     fn view(&self) -> Element<Message> {
-        
-        // let mut content = Column::new()
-        //     .width(Length::Fill)
-        //     .height(Length::Fill)
-        //     .align_items(Alignment::Center)
-        //     .spacing(10);
-        
-        // for i in 0..BOARD_LENGTH {
-        //     let mut row_content = Row::new();
-
-        //     for j in 0..BOARD_LENGTH {
-        //         row_content.push(
-        //             view_tile(&self.board[i][j])
-        //         ); 
-        //     }
-        //     content.push(row_content);
-        // }
-
-        // container(content)
-        //     .width(Length::Fill)
-        //     .height(Length::Fill)
-        //     .center_y()
-        //     .center_x()
-        //     .into()
-        
-        
-        let context1 = row![
-            view_tile(&self.board[0][0]),
-            view_tile(&self.board[0][1]),
-            view_tile(&self.board[0][2]),
-            view_tile(&self.board[0][3]),
-        ]
-        .spacing(10)
-        .align_items(Alignment::Center);
-        
-        let context2 = row![
-            view_tile(&self.board[1][0]),
-            view_tile(&self.board[1][1]),
-            view_tile(&self.board[1][2]),
-            view_tile(&self.board[1][3]),
-        ]
-        .spacing(10)
-        .align_items(Alignment::Center);
-        
-        let context3 = row![
-            view_tile(&self.board[2][0]),
-            view_tile(&self.board[2][1]),
-            view_tile(&self.board[2][2]),
-            view_tile(&self.board[2][3]),
-        ]
-        .spacing(10)
-        .align_items(Alignment::Center);
-        
-        let context4 = row![
-            view_tile(&self.board[3][0]),
-            view_tile(&self.board[3][1]),
-            view_tile(&self.board[3][2]),
-            view_tile(&self.board[3][3]),
-        ]
-        .spacing(10)
-        .align_items(Alignment::Center);
 
 
-        let t = column![
-            context1,
-            context2,
-            context3,
-            context4,
-        ]
-        .spacing(10)
-        .padding(10);
-        
+        let board = (0..BOARD_LENGTH).into_iter().fold(Column::new().spacing(10).padding(10) ,|c, i|
+            c.push(Element::from(
+                (0..BOARD_LENGTH).into_iter().fold(Row::new().spacing(10).align_items(Alignment::Center) ,|c, j|
+                    c.push(
+                        view_tile(&self.board[i][j])
+                    )
+                )
+            ))
+        );
+
         column![
-            text(format!("score : {}", self.score))
-                .horizontal_alignment(Horizontal::Left),
-            container(t)
+            container(
+                text(format!("score : {}", self.score)).size(30)
+            )
+                .width(Length::Fill)
+            ,
+            container(board)
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .center_y()
                 .center_x(),
-            ]
-            // .spacing(10)
-            // .padding(10)
-            .into()
-        
+        ]
+        .into()
         
     }
 }
