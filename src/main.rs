@@ -1,13 +1,12 @@
 use iced::alignment::Horizontal;
-use iced::executor;
-use iced::keyboard;
-use iced::theme::Theme;
+use iced::theme::{self, Theme};
+use iced::{color, Background, Border, Shadow};
 use iced::widget::{
     column, row, container, text,
 };
 use iced::{
-    Alignment, Application, Command, Element, Length, Settings,
-    Subscription, 
+    Alignment, Application, Command, Element, Length, Settings, 
+    Subscription, executor, keyboard
 };
 
 use rand::thread_rng;
@@ -42,17 +41,90 @@ enum Message {
     Process(Option<(Vec<Vec<TileState>>, u32)>),
 }
 
+#[derive(Default)]
+enum CustomColor {
+    #[default]
+    Empty,
+    Power1,
+    Power2,
+    Power3,
+    Power4,
+    Power5,
+    Power6,
+    Power7,
+    Power8,
+    Power9,
+    Power10,
+    Power11,
+    Power12,
+}
+struct CustomContainer {
+    background : CustomColor,
+}
+
+
+
+impl container::StyleSheet for CustomContainer {
+    type Style = Theme;
+
+    fn appearance(&self, _style: &Self::Style) -> container::Appearance {
+        let background: Option<Background> = match self.background {
+            CustomColor::Empty => { Some(Background::Color(color!(0xcc, 0xc0, 0xb4))) },
+            CustomColor::Power1 => { Some(Background::Color(color!(0xee, 0xe4, 0xda))) },
+            CustomColor::Power2 => { Some(Background::Color(color!(0xed, 0xe0, 0xc8))) },
+            CustomColor::Power3 => { Some(Background::Color(color!(0xf2, 0xb1, 0x79))) },
+            CustomColor::Power4 => { Some(Background::Color(color!(0xf5, 0x95, 0x63))) },
+            CustomColor::Power5 => { Some(Background::Color(color!(0xf6, 0x7c, 0x5f))) },
+            CustomColor::Power6 => { Some(Background::Color(color!(0xf6, 0x5e, 0x3b))) },
+            CustomColor::Power7 => { Some(Background::Color(color!(0xed, 0xcf, 0x72))) },
+            CustomColor::Power8 => { Some(Background::Color(color!(0xed, 0xcc, 0x61))) },
+            CustomColor::Power9 => { Some(Background::Color(color!(0xed, 0xc8, 0x50))) },
+            CustomColor::Power10 => { Some(Background::Color(color!(0xed, 0xc5, 0x3f))) },
+            CustomColor::Power11 => { Some(Background::Color(color!(0xed, 0xc2, 0x2e))) },
+            CustomColor::Power12 => { Some(Background::Color(color!(149, 40, 169))) },
+        };
+
+
+        container::Appearance {
+            text_color: None,
+            background ,
+            border: Border::with_radius(3),
+            shadow: Shadow::default(),
+        }
+    }
+}
+
 fn view_tile(tile: &TileState) -> Element<Message>  {
+
+    let background;
 
     let t = match tile {
         TileState::Empty => {
+            background = CustomColor::Empty;
+
             text(" ")
-                .size(40)
+                .size(35)
                 .horizontal_alignment(Horizontal::Center)
         },
         TileState::Value(x) => {
+            background = match x {
+                2=> {CustomColor::Power1},
+                4=> {CustomColor::Power2},
+                8=> {CustomColor::Power3},
+                16=> {CustomColor::Power4},
+                32=> {CustomColor::Power5},
+                64=> {CustomColor::Power6},
+                128=> {CustomColor::Power7},
+                256=> {CustomColor::Power8},
+                512=> {CustomColor::Power9},
+                1024=> {CustomColor::Power10},
+                2048=> {CustomColor::Power11},
+                _=> {CustomColor::Power12},
+            };
+
+
              text(format!("{}", x))
-                .size(40)
+                .size(35)
                 .horizontal_alignment(Horizontal::Center)
             
         }
@@ -63,7 +135,13 @@ fn view_tile(tile: &TileState) -> Element<Message>  {
         .height(Length::Fixed(100.0))
         .center_y()
         .center_x()
+        .style(theme::Container::Custom(
+            Box::new(CustomContainer {
+                background,
+            })
+        ))
         .into()
+
 }
 
 
@@ -403,9 +481,6 @@ impl Application for Game2048 {
                 }
                 Command::none()
             },
-            _ => {
-                Command::none()
-            },
         }
     }
 
@@ -508,8 +583,7 @@ impl Application for Game2048 {
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .center_y()
-                .center_x()
-                // .style()
+                .center_x(),
             ]
             // .spacing(10)
             // .padding(10)
