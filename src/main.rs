@@ -2,7 +2,7 @@ use iced::alignment::Horizontal;
 use iced::theme::{self, Theme};
 use iced::{color, Background, Border, Shadow};
 use iced::widget::{
-    column, container, row, text, Column, Row
+    button, column, container, row, text, Column, Row
 };
 use iced::{
     Alignment, Application, Command, Element, Length, Settings, 
@@ -30,6 +30,7 @@ enum TileState {
 struct Game2048 {
     board: Vec<Vec<TileState>>,
     score: u32,
+    game_over: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -39,6 +40,7 @@ enum Message {
     MoveRight,
     MoveLeft,
     Process(Option<(Vec<Vec<TileState>>, u32)>),
+    Reset,
 }
 
 #[derive(Default)]
@@ -448,6 +450,7 @@ impl Application for Game2048 {
             Self {
                 board,
                 score: 0,
+                game_over: false,
             },
             Command::none()
         )
@@ -476,11 +479,20 @@ impl Application for Game2048 {
                     self.board = x;
                     self.score += score;
                 } else {
-                    // game over
-                    println!("game over");
+                    self.game_over = true;
                 }
                 Command::none()
             },
+            Message::Reset => {
+                let board = vec![vec![TileState::Empty; BOARD_LENGTH]; BOARD_LENGTH];
+                let board = spawn_tile(&board).unwrap();
+
+                self.board = board;
+                self.score = 0;
+                self.game_over = false;        
+                
+                Command::none()
+            }
         }
     }
 
@@ -505,29 +517,38 @@ impl Application for Game2048 {
 
     fn view(&self) -> Element<Message> {
 
-
-        let board = (0..BOARD_LENGTH).into_iter().fold(Column::new().spacing(10).padding(10) ,|c, i|
-            c.push(Element::from(
-                (0..BOARD_LENGTH).into_iter().fold(Row::new().spacing(10).align_items(Alignment::Center) ,|c, j|
-                    c.push(
-                        view_tile(&self.board[i][j])
+        let board = if !self.game_over {
+            (0..BOARD_LENGTH).into_iter().fold(Column::new().spacing(10).padding(10) ,|c, i|
+                c.push(Element::from(
+                    (0..BOARD_LENGTH).into_iter().fold(Row::new().spacing(10).align_items(Alignment::Center) ,|c, j|
+                        c.push(
+                            view_tile(&self.board[i][j])
+                        )
                     )
-                )
-            ))
-        );
-
-        column![
-            container(
-                text(format!("score : {}", self.score)).size(30)
+                ))
             )
-                .width(Length::Fill)
-            ,
-            container(board)
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .center_y()
-                .center_x(),
-        ]
+        } else {
+            column!(
+                text("Game over").size(30),
+            )
+        };
+        
+        container(
+    column![
+                container(
+                    row!(
+                        button(text("reset").size(30.0).horizontal_alignment(Horizontal::Center)).on_press(Message::Reset),
+                        text("              ").size(35),
+                        text(format!("score : {}", self.score)).size(30),
+                    )
+                ),
+                container(board)
+            ]
+        )
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .center_y()
+        .center_x()
         .into()
         
     }
