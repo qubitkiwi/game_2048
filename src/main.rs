@@ -1,6 +1,5 @@
 use iced::alignment::Horizontal;
 use iced::theme::{self, Theme};
-use iced::{color, Background, Border, Shadow};
 use iced::widget::{
     button, column, container, row, text, Column, Row
 };
@@ -8,6 +7,8 @@ use iced::{
     Alignment, Application, Command, Element, Length, Settings, 
     Subscription, executor, keyboard
 };
+
+mod custom_theme;
 
 use rand::thread_rng;
 use rand::seq::SliceRandom;
@@ -34,66 +35,17 @@ struct Game2048 {
 }
 
 #[derive(Debug, Clone)]
+enum Arrow {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+#[derive(Debug, Clone)]
 enum Message {
-    MoveUp,
-    MoveDown,
-    MoveRight,
-    MoveLeft,
-    Process(Option<(Vec<Vec<TileState>>, u32)>),
+    Move(Arrow),
     Reset,
-}
-
-#[derive(Default)]
-enum CustomColor {
-    #[default]
-    Empty,
-    Power1,
-    Power2,
-    Power3,
-    Power4,
-    Power5,
-    Power6,
-    Power7,
-    Power8,
-    Power9,
-    Power10,
-    Power11,
-    Power12,
-}
-struct CustomContainer {
-    background : CustomColor,
-}
-
-
-
-impl container::StyleSheet for CustomContainer {
-    type Style = Theme;
-
-    fn appearance(&self, _style: &Self::Style) -> container::Appearance {
-        let background: Option<Background> = match self.background {
-            CustomColor::Empty => { Some(Background::Color(color!(0xcc, 0xc0, 0xb4))) },
-            CustomColor::Power1 => { Some(Background::Color(color!(0xee, 0xe4, 0xda))) },
-            CustomColor::Power2 => { Some(Background::Color(color!(0xed, 0xe0, 0xc8))) },
-            CustomColor::Power3 => { Some(Background::Color(color!(0xf2, 0xb1, 0x79))) },
-            CustomColor::Power4 => { Some(Background::Color(color!(0xf5, 0x95, 0x63))) },
-            CustomColor::Power5 => { Some(Background::Color(color!(0xf6, 0x7c, 0x5f))) },
-            CustomColor::Power6 => { Some(Background::Color(color!(0xf6, 0x5e, 0x3b))) },
-            CustomColor::Power7 => { Some(Background::Color(color!(0xed, 0xcf, 0x72))) },
-            CustomColor::Power8 => { Some(Background::Color(color!(0xed, 0xcc, 0x61))) },
-            CustomColor::Power9 => { Some(Background::Color(color!(0xed, 0xc8, 0x50))) },
-            CustomColor::Power10 => { Some(Background::Color(color!(0xed, 0xc5, 0x3f))) },
-            CustomColor::Power11 => { Some(Background::Color(color!(0xed, 0xc2, 0x2e))) },
-            CustomColor::Power12 => { Some(Background::Color(color!(149, 40, 169))) },
-        };
-
-
-        container::Appearance {
-            text_color: None,
-            background ,
-            border: Border::with_radius(3),
-            shadow: Shadow::default(),
-        }
-    }
 }
 
 fn view_tile(tile: &TileState) -> Element<Message>  {
@@ -102,7 +54,7 @@ fn view_tile(tile: &TileState) -> Element<Message>  {
 
     let t = match tile {
         TileState::Empty => {
-            background = CustomColor::Empty;
+            background = custom_theme::CustomColor::Empty;
 
             text(" ")
                 .size(35)
@@ -110,18 +62,18 @@ fn view_tile(tile: &TileState) -> Element<Message>  {
         },
         TileState::Value(x) => {
             background = match x {
-                2=> {CustomColor::Power1},
-                4=> {CustomColor::Power2},
-                8=> {CustomColor::Power3},
-                16=> {CustomColor::Power4},
-                32=> {CustomColor::Power5},
-                64=> {CustomColor::Power6},
-                128=> {CustomColor::Power7},
-                256=> {CustomColor::Power8},
-                512=> {CustomColor::Power9},
-                1024=> {CustomColor::Power10},
-                2048=> {CustomColor::Power11},
-                _=> {CustomColor::Power12},
+                2=> {custom_theme::CustomColor::Power1},
+                4=> {custom_theme::CustomColor::Power2},
+                8=> {custom_theme::CustomColor::Power3},
+                16=> {custom_theme::CustomColor::Power4},
+                32=> {custom_theme::CustomColor::Power5},
+                64=> {custom_theme::CustomColor::Power6},
+                128=> {custom_theme::CustomColor::Power7},
+                256=> {custom_theme::CustomColor::Power8},
+                512=> {custom_theme::CustomColor::Power9},
+                1024=> {custom_theme::CustomColor::Power10},
+                2048=> {custom_theme::CustomColor::Power11},
+                _=> {custom_theme::CustomColor::Power12},
             };
 
 
@@ -138,7 +90,7 @@ fn view_tile(tile: &TileState) -> Element<Message>  {
         .center_y()
         .center_x()
         .style(theme::Container::Custom(
-            Box::new(CustomContainer {
+            Box::new(custom_theme::CustomContainer {
                 background,
             })
         ))
@@ -421,20 +373,6 @@ fn move_right(board: &Vec<Vec<TileState>>) -> Option<(Vec<Vec<TileState>>, u32)>
     }
 }
 
-async fn process(board: Vec<Vec<TileState>>, f: fn(&Vec<Vec<TileState>>) -> Option<(Vec<Vec<TileState>>, u32)>) -> Option<(Vec<Vec<TileState>>, u32)> {
-    if let Some((x, score)) = f(&board) {
-        if let Some(y) = spawn_tile(&x) {
-            return Some((y, score));
-        } else {
-            return Some((x, score));
-        }
-    } else if is_over(&board) {
-        None
-    } else {
-        Some((board, 0))
-    }
-}
-
 impl Application for Game2048 {
     type Message = Message;
     type Theme = Theme;
@@ -462,25 +400,27 @@ impl Application for Game2048 {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::MoveUp => {
-                Command::perform(process(self.board.clone(), move_up), Message::Process)
-            },
-            Message::MoveDown => {
-                Command::perform(process(self.board.clone(), move_down), Message::Process)
-            },
-            Message::MoveLeft => {
-                Command::perform(process(self.board.clone(), move_left), Message::Process)
-            },
-            Message::MoveRight => {
-                Command::perform(process(self.board.clone(), move_right), Message::Process)
-            },
-            Message::Process(result) => {
-                if let Some((x, score)) = result {
-                    self.board = x;
-                    self.score += score;
-                } else {
+            Message::Move(arr) => {
+                
+                let f = match arr {
+                    Arrow::Up   => { move_up },
+                    Arrow::Down => { move_down },
+                    Arrow::Left => { move_left },
+                    Arrow::Right=> { move_right },
+                };
+
+                if let Some((x, score)) = f(&self.board) {
+                    if let Some(y) = spawn_tile(&x) {
+                        self.board = y;
+                        self.score += score;
+                    } else {
+                        self.board = x;
+                        self.score += score;
+                    }
+                } else if is_over(&self.board) {
                     self.game_over = true;
                 }
+
                 Command::none()
             },
             Message::Reset => {
@@ -496,7 +436,7 @@ impl Application for Game2048 {
         }
     }
 
-    fn subscription(&self) -> Subscription<Message> {        
+    fn subscription(&self) -> Subscription<Message> {
         use keyboard::key;
 
         keyboard::on_key_press(|key, _| {
@@ -505,10 +445,10 @@ impl Application for Game2048 {
             };
 
             match key {
-                key::Named::ArrowUp     => Some(Message::MoveUp),
-                key::Named::ArrowDown   => Some(Message::MoveDown),
-                key::Named::ArrowRight  => Some(Message::MoveRight),
-                key::Named::ArrowLeft   => Some(Message::MoveLeft),
+                key::Named::ArrowUp     => Some(Message::Move(Arrow::Up)),
+                key::Named::ArrowDown   => Some(Message::Move(Arrow::Down)),
+                key::Named::ArrowLeft   => Some(Message::Move(Arrow::Left)),
+                key::Named::ArrowRight  => Some(Message::Move(Arrow::Right)),
                 _ => None,
             }
         })
@@ -534,7 +474,7 @@ impl Application for Game2048 {
         };
         
         container(
-    column![
+            column![
                 container(
                     row!(
                         button(text("reset").size(30.0).horizontal_alignment(Horizontal::Center)).on_press(Message::Reset),
