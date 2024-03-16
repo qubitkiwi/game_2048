@@ -10,7 +10,7 @@ use iced::{
 
 mod custom_theme;
 
-use rand::thread_rng;
+use rand::{thread_rng, Fill};
 use rand::seq::SliceRandom;
 
 const BOARD_LENGTH: usize = 4;
@@ -458,7 +458,7 @@ impl Application for Game2048 {
     fn view(&self) -> Element<Message> {
 
         let board = if !self.game_over {
-            (0..BOARD_LENGTH).into_iter().fold(Column::new().spacing(10).padding(10) ,|c, i|
+            container((0..BOARD_LENGTH).into_iter().fold(Column::new().spacing(10).padding(10) ,|c, i|
                 c.push(Element::from(
                     (0..BOARD_LENGTH).into_iter().fold(Row::new().spacing(10).align_items(Alignment::Center) ,|c, j|
                         c.push(
@@ -466,30 +466,29 @@ impl Application for Game2048 {
                         )
                     )
                 ))
-            )
+            ))
         } else {
-            column!(
-                text("Game over").size(30),
+            container(
+                text(" Game over ").size(50).horizontal_alignment(Horizontal::Center),
             )
         };
         
         container(
-            column![
-                container(
-                    row!(
-                        button(text("reset").size(30.0).horizontal_alignment(Horizontal::Center)).on_press(Message::Reset),
-                        text("              ").size(35),
-                        text(format!("score : {}", self.score)).size(30),
-                    )
-                ),
-                container(board)
-            ]
+    column!(
+                row!(
+                    button(text("reset").size(30.0).horizontal_alignment(Horizontal::Center)).on_press(Message::Reset),
+                    text("").width(Length::Fill),
+                    text(format!("score : {}", self.score)).size(30).horizontal_alignment(Horizontal::Right),
+                )
+                .align_items(Alignment::Center),
+                board
+            )
+            .width(Length::Shrink)
         )
         .width(Length::Fill)
         .height(Length::Fill)
         .center_y()
         .center_x()
         .into()
-        
     }
 }
