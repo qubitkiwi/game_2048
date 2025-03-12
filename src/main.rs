@@ -1,25 +1,23 @@
 use iced::alignment::Horizontal;
-use iced::theme::{self, Theme};
 use iced::widget::{
     button, column, container, row, text, Column, Row
 };
 use iced::{
-    Alignment, Application, Command, Element, Length, Settings, 
-    Subscription, executor, keyboard
+    Element, Length, Center, Subscription, keyboard
 };
 
 mod custom_theme;
 
-use rand::{thread_rng, Fill};
+use rand::thread_rng;
 use rand::seq::SliceRandom;
 
 const BOARD_LENGTH: usize = 4;
 
 pub fn main() -> iced::Result {
 
-    Game2048::run(Settings {
-        ..Settings::default()
-    })
+    iced::application("Game2048 - Iced", Game2048::update, Game2048::view)
+        .subscription(Game2048::subscription)
+        .run()
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -48,6 +46,7 @@ enum Message {
     Reset,
 }
 
+
 fn view_tile(tile: &TileState) -> Element<Message>  {
 
     let background;
@@ -58,7 +57,7 @@ fn view_tile(tile: &TileState) -> Element<Message>  {
 
             text(" ")
                 .size(35)
-                .horizontal_alignment(Horizontal::Center)
+                .align_x(Center)
         },
         TileState::Value(x) => {
             background = match x {
@@ -79,7 +78,8 @@ fn view_tile(tile: &TileState) -> Element<Message>  {
 
              text(format!("{}", x))
                 .size(35)
-                .horizontal_alignment(Horizontal::Center)
+                // .horizontal_alignment(Horizontal::Center)
+                .align_x(Center)
             
         }
     };
@@ -87,13 +87,9 @@ fn view_tile(tile: &TileState) -> Element<Message>  {
     container(t)
         .width(Length::Fixed(100.0))
         .height(Length::Fixed(100.0))
-        .center_y()
-        .center_x()
-        .style(theme::Container::Custom(
-            Box::new(custom_theme::CustomContainer {
-                background,
-            })
-        ))
+        .align_x(Center)
+        .align_y(Center)
+        .style(custom_theme::tile(background))
         .into()
 
 }
@@ -373,32 +369,23 @@ fn move_right(board: &Vec<Vec<TileState>>) -> Option<(Vec<Vec<TileState>>, u32)>
     }
 }
 
-impl Application for Game2048 {
-    type Message = Message;
-    type Theme = Theme;
-    type Executor = executor::Default;
-    type Flags = ();
+impl Game2048 {
 
-    fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
+    fn new() -> Self {
         
         let board = vec![vec![TileState::Empty; BOARD_LENGTH]; BOARD_LENGTH];
         let board = spawn_tile(&board).unwrap();
 
-        (            
-            Self {
-                board,
-                score: 0,
-                game_over: false,
-            },
-            Command::none()
-        )
+                    
+        Self {
+            board,
+            score: 0,
+            game_over: false,
+        }
     }
 
-    fn title(&self) -> String {
-        String::from("Game2048 - Iced")
-    }
 
-    fn update(&mut self, message: Message) -> Command<Message> {
+    fn update(&mut self, message: Message) {
         match message {
             Message::Move(arr) => {
                 
@@ -420,8 +407,6 @@ impl Application for Game2048 {
                 } else if is_over(&self.board) {
                     self.game_over = true;
                 }
-
-                Command::none()
             },
             Message::Reset => {
                 let board = vec![vec![TileState::Empty; BOARD_LENGTH]; BOARD_LENGTH];
@@ -430,8 +415,6 @@ impl Application for Game2048 {
                 self.board = board;
                 self.score = 0;
                 self.game_over = false;        
-                
-                Command::none()
             }
         }
     }
@@ -460,7 +443,8 @@ impl Application for Game2048 {
         let board = if !self.game_over {
             container((0..BOARD_LENGTH).into_iter().fold(Column::new().spacing(10).padding(10) ,|c, i|
                 c.push(Element::from(
-                    (0..BOARD_LENGTH).into_iter().fold(Row::new().spacing(10).align_items(Alignment::Center) ,|c, j|
+                    (0..BOARD_LENGTH).into_iter().fold(Row::new().spacing(10)//.align_items(Alignment::Center)
+                         ,|c, j|
                         c.push(
                             view_tile(&self.board[i][j])
                         )
@@ -469,26 +453,33 @@ impl Application for Game2048 {
             ))
         } else {
             container(
-                text(" Game over ").size(50).horizontal_alignment(Horizontal::Center),
+                text(" Game over ").size(50).align_x(Center),
             )
         };
         
         container(
-    column!(
+            column!(
                 row!(
-                    button(text("reset").size(30.0).horizontal_alignment(Horizontal::Center)).on_press(Message::Reset),
-                    text("").width(Length::Fill),
-                    text(format!("score : {}", self.score)).size(30).horizontal_alignment(Horizontal::Right),
+                    button(text("reset").size(30.0).align_x(Center)).on_press(Message::Reset),
+                    // text("").width(Length::FillPortion(1)),
+                    text(format!("score : {}", self.score)).size(30).align_x(Horizontal::Right),
                 )
-                .align_items(Alignment::Center),
+                ,
                 board
             )
             .width(Length::Shrink)
         )
         .width(Length::Fill)
         .height(Length::Fill)
-        .center_y()
-        .center_x()
+        .align_x(Center)
+        .align_y(Center)
         .into()
+    }
+}
+
+
+impl Default for Game2048 {
+    fn default() -> Self {
+        Game2048::new()
     }
 }
